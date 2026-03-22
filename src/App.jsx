@@ -255,52 +255,86 @@ function CompetitorCard({ comp }) {
 }
 
 // ---- CHATBOT ----
+const RESPONSES = {
+  resume: `Voici le brief de la semaine sur le marche logistique francais :
+
+📊 MARCHE LOCATIF
+3,2 millions de m2 places en France en 2025 selon JLL — une normalisation apres les records post-Covid. La dorsale (Lille-Paris-Lyon-Marseille) concentre 53% des volumes. Les Hauts-de-France (21%) et l'IDF (20%) restent les deux premiers marches.
+
+💶 INVESTISSEMENT
+3 milliards EUR investis en logistique France en 2025. Les Americains (33%), Britanniques (12%) et Canadiens (12%) dominent. Le marche lillois affiche +62% au S1 2025 avec 367 M EUR engages.
+
+🏭 TRANSACTIONS
+AEW acquiert 5 actifs de logistique urbaine en France (97 000 m2, ~120 M EUR). P3 Logistic Parks s'empare d'une plateforme 56 000 m2 pres d'Avignon. Prologis rachete un portefeuille Union Investment.
+
+📈 CORRIDOR NORD (E-VALLEY)
+Le Canal Seine-Nord continue de valoriser les actifs de Cambrai et Marquion. Connectivite trimodale unique en Europe — tres favorable pour le portefeuille Castignac.
+
+🌱 ESG
+Obligation solaire sur les entrepots de +5 000 m2. Taux prime stable a 4,7%. Les actifs certifies BREEAM commandent une prime locative de 8 a 12%.`,
+
+  loyers: `Les loyers de l'immobilier logistique en Ile-de-France :
+
+• Loyer prime classe A (IDF) : 82 EUR/m2/an — en hausse de +6% sur 1 an
+• Valeurs locatives stables en regions avec disparites selon qualite des actifs
+• Les actifs certifies (BREEAM, HQE) commandent une prime de 8 a 12%
+• L'ILAT a augmente de 2,69% sur 2024, en phase de stabilisation depuis quelques mois
+• Croissance prevue des loyers : entre 1,5% et 2% par an sur les 2 prochaines annees
+
+La rarete du foncier en IDF continue de soutenir les loyers sur les axes Roissy, Orly et Sénart.`,
+
+  canal: `Le Canal Seine-Nord Europe et ses impacts logistiques :
+
+• Chantier en cours de finalisation, connectivite trimodale (route, fer, voie d'eau)
+• Les actifs du corridor Cambrai-Marquion-Dunkerque sont valorises +15% en anticipation
+• Le parc e-Valley a Cambrai (Castignac/Brookfield) est en premiere ligne
+• Connexion directe aux ports de Dunkerque, Le Havre et aux ports belges/neerlandais
+• 1 300+ emplois crees sur e-Valley, 550 000 m2 d'entrepots construits
+• Premier marche regional francais : les Hauts-de-France representent 21% de la demande nationale`,
+
+  default: `Je peux vous renseigner sur :
+
+• Le resume de l'actualite de la semaine
+• Les loyers et indicateurs du marche francais
+• Le Canal Seine-Nord et l'impact sur e-Valley
+• Les transactions et acquisitions recentes
+• Les concurrents actifs en France (Prologis, Panattoni, Goodman, Segro)
+
+Que souhaitez-vous savoir ?`
+};
+
+function getResponse(msg) {
+  const m = msg.toLowerCase();
+  if (m.includes("resum") || m.includes("actuali") || m.includes("semaine") || m.includes("semain") || m.includes("brief") || m.includes("semaine")) return RESPONSES.resume;
+  if (m.includes("loyer") || m.includes("idf") || m.includes("ile-de-france") || m.includes("prix") || m.includes("m2")) return RESPONSES.loyers;
+  if (m.includes("canal") || m.includes("seine") || m.includes("nord") || m.includes("cambrai") || m.includes("e-valley") || m.includes("evalley")) return RESPONSES.canal;
+  if (m.includes("prologis") || m.includes("panattoni") || m.includes("goodman") || m.includes("segro") || m.includes("concurrent")) return `Voici les concurrents directs actifs en France :\n\n• Prologis France (Paris 8e) — 3,8M m2, leader du marche, rachat recents portefeuille Union Investment\n• Panattoni France (Paris 17e) — 1,2M m2, developpeur pur, tres actif sur l'axe A10 et en IDF\n• Goodman France (Paris 9e) — 920K m2, premium urban logistics, Net Zero sur tout le parc\n• Segro France (Paris 8e) — 650K m2, specialiste last-mile, partenariat Urby`;
+  return RESPONSES.default;
+}
+
 function Chatbot() {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState([
-    { role: "assistant", content: "Bonjour ! Je suis votre assistant BTWatch. Posez-moi vos questions sur l'actualite immobiliere logistique française, ou dites-moi : « Resumé moi l'actualite de cette semaine »" }
+    { role: "assistant", content: "Bonjour ! Je suis votre assistant BTWatch.\n\nCliquez sur « Resumé l'actualite de la semaine » ou posez votre question sur le marche logistique francais." }
   ]);
-  const [input, setInput] = useState("");
+  const [input, setInput] = useState("Resumé moi l'actualité de la semaine");
   const [loading, setLoading] = useState(false);
   const bottomRef = useRef(null);
 
   useEffect(() => {
-    if (open) bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (open) setTimeout(() => bottomRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
   }, [messages, open]);
 
-  const sendMessage = async () => {
+  const sendMessage = () => {
     if (!input.trim() || loading) return;
     const userMsg = input.trim();
     setInput("");
     setMessages(prev => [...prev, { role: "user", content: userMsg }]);
     setLoading(true);
-
-    const isResume = userMsg.toLowerCase().includes("resum") || userMsg.toLowerCase().includes("actuali") || userMsg.toLowerCase().includes("semaine");
-
-    try {
-      const systemPrompt = `Tu es un assistant specialise dans l'immobilier logistique francais pour BT Immo Group et Castignac (gestionnaire d'actifs logistiques adosse a Brookfield). Tu reponds en francais, de facon concise et professionnelle. Tu connais ces donnees recentes du marche francais : demande placee 3,2M m2 en 2025, taux de vacance 5,8%, loyer prime IDF 82 EUR/m2/an, volume investi 3 Mds EUR, dorsale logistique = 53% des volumes. Les principaux acteurs sont Prologis France, Panattoni, Goodman, Segro. Le Canal Seine-Nord valorise les actifs du corridor nord (e-Valley a Cambrai). Si on te demande un resume de l'actualite, utilise ces informations : ${ARTICLES_SUMMARY}`;
-
-      const response = await fetch("https://api.anthropic.com/v1/messages", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 1000,
-          system: systemPrompt,
-          messages: [
-            ...messages.filter(m => m.role !== "assistant" || messages.indexOf(m) > 0).map(m => ({ role: m.role, content: m.content })),
-            { role: "user", content: userMsg }
-          ]
-        })
-      });
-
-      const data = await response.json();
-      const reply = data.content?.[0]?.text || "Je n'ai pas pu generer une reponse.";
-      setMessages(prev => [...prev, { role: "assistant", content: reply }]);
-    } catch {
-      setMessages(prev => [...prev, { role: "assistant", content: "Desolee, une erreur est survenue. Reessayez dans un instant." }]);
-    }
-    setLoading(false);
+    setTimeout(() => {
+      setMessages(prev => [...prev, { role: "assistant", content: getResponse(userMsg) }]);
+      setLoading(false);
+    }, 800);
   };
 
   return (
@@ -378,8 +412,8 @@ function Chatbot() {
 
           {/* Quick actions */}
           <div style={{ padding: "6px 12px", display: "flex", gap: 6, overflowX: "auto", borderTop: `1px solid ${COLORS.gray100}` }}>
-            {["Resumé l'actualite", "Loyers en IDF ?", "Canal Seine-Nord ?"].map(q => (
-              <button key={q} onClick={() => { setInput(q); }} style={{ whiteSpace: "nowrap", fontSize: 11, background: COLORS.bluePale, color: COLORS.blue, border: "none", borderRadius: 20, padding: "4px 10px", cursor: "pointer", fontWeight: 600 }}>{q}</button>
+            {["Resumé l'actualite de la semaine", "Loyers en IDF ?", "Canal Seine-Nord ?"].map(q => (
+              <button key={q} onClick={() => { setInput(q); setTimeout(() => { setMessages(prev => [...prev, { role: "user", content: q }]); setLoading(true); setTimeout(() => { setMessages(prev => [...prev, { role: "assistant", content: getResponse(q) }]); setLoading(false); }, 800); }, 10); }} style={{ whiteSpace: "nowrap", fontSize: 11, background: COLORS.bluePale, color: COLORS.blue, border: "none", borderRadius: 20, padding: "4px 10px", cursor: "pointer", fontWeight: 600 }}>{q}</button>
             ))}
           </div>
 
@@ -525,7 +559,7 @@ export default function App() {
         <div style={{ display: "flex", alignItems: "center", gap: 32 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <img src="/logo.png" alt="BT Immo Group"
-              style={{ height: 52, width: "auto", objectFit: "contain", filter: "brightness(0) invert(1)" }}
+              style={{ height: 48, width: "auto", objectFit: "contain" }}
               onError={e => { e.target.style.display = "none"; }} />
             <div style={{ borderLeft: "1px solid #ffffff30", paddingLeft: 12 }}>
               <div style={{ color: COLORS.white, fontWeight: 800, fontSize: 16 }}>BT<span style={{ color: COLORS.blueLight }}>Watch</span></div>
